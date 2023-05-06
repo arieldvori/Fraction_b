@@ -32,6 +32,7 @@ using namespace std;
     {
         if(_b==0)
             throw std::invalid_argument("cant devide by 0!");
+        this->reduse();
     }
 
     Fraction::Fraction(float num)//in part b i will add fuction to convert float to fraction
@@ -44,13 +45,20 @@ using namespace std;
             num=num*accuracy;
             int new_num=(int)num;
             int g = gcd(new_num,accuracy);
-            *this= Fraction(new_num/g,accuracy/g);
+            Fraction a(new_num/g,accuracy/g);
+            a.reduse();
+            *this=a;
         }
 
     }
 
     Fraction::Fraction(double num){
         *this= Fraction(float(num));
+    }
+
+    Fraction::Fraction(){
+        _t = 1;
+        _b = 1;
     }
     
        
@@ -80,9 +88,25 @@ using namespace std;
     }
     //overload the operator == for 2 fractions. 
     bool Fraction::operator==(const Fraction &frac2) const{
-        if(this->_t==frac2._t&&this->_b==frac2._b)
+        bool frac1pos = false, frac2pos = false;
+        if((this->_t>=0 && this->_b>=0)||(this->_t<=0 && this->_b<=0))
+            frac1pos=true;
+        if((frac2._t>=0 && frac2._b>=0)||(frac2._t<=0 && frac2._b<=0))
+            frac2pos=true;
+        //diff sign
+        if (frac1pos ^ frac2pos)   
+            return false;
+        //both neg
+        else if (frac1pos==false && frac2pos==false){
+            if(((this->_t*(-1)) != frac2._t) && (this->_b*(-1)) != frac2._b)
+                return false;
             return true;
-        return false;
+        }
+        else{
+            if(((this->_t) != frac2._t) && (this->_b) != frac2._b)
+                return false;
+            return true;
+        }
     }
     //overload the operator != for 2 fractions. 
     bool Fraction::operator!=(const Fraction &frac2) const{
@@ -226,12 +250,12 @@ using namespace std;
     
      //overload the operator prefix ++. 
     Fraction &Fraction::operator++(){
-        this->_t = this->_t+this->_b;
+        this->_t += this->_b;
         return *this;
     }
     //overload the operator prefix --. 
     Fraction &Fraction::operator--(){
-        this->_t = this->_t-this->_b;
+        this->_t -= this->_b;
         return *this;
     }
     //overload the operator postfix ++. 
@@ -243,18 +267,29 @@ using namespace std;
     //overload the operator postfix --. 
     Fraction Fraction::operator--(int){
         Fraction new_f= *this;
-        this->operator++();
+        this->operator--();
         return new_f;
     }
 
     //overload the operator << for fraction. 
     std::ostream &ariel::operator<<(std::ostream &os, const Fraction &fraction){
-        os << fraction._t << "/" << fraction._b << std::endl;
+        if(fraction._b<0){
+            os << (-1)*fraction._t << "/" << (-1)*fraction._b ;
+        }
+        else{
+            os << fraction._t << "/" << fraction._b ;
+        }
         return os;
     }
     //overload the operator >>. 
     std::istream &ariel::operator>>(std::istream &is, Fraction &fraction){
-        is >> fraction._t >> fraction._b;
+        int top=0;
+        int bottom=0;
+        is >> top >> bottom;
+        if(bottom==0)
+            throw runtime_error("not enogh parameters");
+        fraction._t=top;
+        fraction._b=bottom;
         return is;
     }
 

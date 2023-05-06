@@ -11,14 +11,10 @@ namespace ariel{
 
     public:
 
-        Fraction(int t, int b);
+        Fraction(int top, int bottom);
         Fraction(float num);
         Fraction(double num);
-        Fraction()
-        {
-            _t = 1;
-            _b = 1;
-        }
+        Fraction();
 
         void reduse();//redused form
         int gcd(int top, int bottom);//returns the greatest common divisor
