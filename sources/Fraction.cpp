@@ -7,48 +7,37 @@ using namespace ariel;
 using namespace std;
 
     int Fraction::gcd(int t,int b){
-        if(t<0)
-            t=t*-1;
-        if(b<0)
-            b=b*-1;
-        if(t == 0)
-            return b;
-        else if(b == 0)
+        if (b == 0)
+        {
             return t;
-        if(t < b)
-            return gcd(t, b % t);
-        else
-            return gcd(b, t % b);
+        }
+        return gcd(b, t % b);
     }
 
 
     void Fraction::reduse(){
-        int g=gcd(_t,_b);
-        _t=_t/g;
-        _b=_b/g;
+        int g=abs(gcd(abs(_t),abs(_b)));
+        this->_t/=g;
+        this->_b/=g;
         if (this->_b < 0){
-        this->_t *= -1;
-        this->_b *= -1;
+                this->_t *= -1;
+                this->_b *= -1;
+            
         }
     }
 
     Fraction::Fraction(int top, int bottom)
     :_t(top), _b(bottom)
-    {
+    {   
         if(_b==0)
             throw std::invalid_argument("cant devide by 0!");
         this->reduse();
     }
 
-    Fraction::Fraction(float num)//in part b i will add fuction to convert float to fraction
-    {
-        int accuracy=1000;
-        num=num*accuracy;
-        int new_num=(int)num;
-        int g = gcd(new_num,accuracy);
-        Fraction a(new_num/g,accuracy/g);
-        a.reduse();
-        *this=a;
+    Fraction::Fraction(float num){
+        int val = num * 1000;
+        float float_val = (float)val / 1000;
+        *this = Fraction(float_val * 1000, 1000);
     }
 
     Fraction::Fraction(double num){
@@ -63,8 +52,9 @@ using namespace std;
        
     //overload the operator + for 2 fractions. 
     Fraction Fraction::operator+(const Fraction &frac2) const{
-        long int a=_t*frac2._b+_b*frac2._t;
-        if ((a < INT_MIN) || (a > INT_MAX))
+        long int a=_t*frac2._b;
+        long int b= _b*frac2._t;
+        if ((a+b < INT_MIN) || (a+b > INT_MAX))
             throw overflow_error("int out of range"); 
         Fraction new_f((_t*frac2._b+_b*frac2._t),(_b*frac2._b));
         new_f.reduse();
@@ -72,8 +62,9 @@ using namespace std;
     }
     //overload the operator - for 2 fractions. 
     Fraction Fraction::operator-(const Fraction &frac2) const{
-        long int a=_t*frac2._b-_b*frac2._t;
-        if ((a < INT_MIN) || (a > INT_MAX))
+        long int a=_t*frac2._b;
+        long int b= _b*frac2._t;
+        if ((a-b < INT_MIN) || (a-b > INT_MAX))
             throw overflow_error("int out of range"); 
         Fraction new_f((_t*frac2._b-_b*frac2._t),(_b*frac2._b));
         new_f.reduse();
