@@ -1,6 +1,7 @@
 #include "Fraction.hpp"
 #include <iostream>
 #include <stdio.h>
+#include <climits>
 
 using namespace ariel;
 using namespace std;
@@ -25,6 +26,10 @@ using namespace std;
         int g=gcd(_t,_b);
         _t=_t/g;
         _b=_b/g;
+        if (this->_b < 0){
+        this->_t *= -1;
+        this->_b *= -1;
+        }
     }
 
     Fraction::Fraction(int top, int bottom)
@@ -37,19 +42,13 @@ using namespace std;
 
     Fraction::Fraction(float num)//in part b i will add fuction to convert float to fraction
     {
-        if(num==0.0){
-            *this= Fraction(0,1);
-        }
-        else{
-            int accuracy=1000;
-            num=num*accuracy;
-            int new_num=(int)num;
-            int g = gcd(new_num,accuracy);
-            Fraction a(new_num/g,accuracy/g);
-            a.reduse();
-            *this=a;
-        }
-
+        int accuracy=1000;
+        num=num*accuracy;
+        int new_num=(int)num;
+        int g = gcd(new_num,accuracy);
+        Fraction a(new_num/g,accuracy/g);
+        a.reduse();
+        *this=a;
     }
 
     Fraction::Fraction(double num){
@@ -64,77 +63,93 @@ using namespace std;
        
     //overload the operator + for 2 fractions. 
     Fraction Fraction::operator+(const Fraction &frac2) const{
+        long int a=_t*frac2._b+_b*frac2._t;
+        if ((a < INT_MIN) || (a > INT_MAX))
+            throw overflow_error("int out of range"); 
         Fraction new_f((_t*frac2._b+_b*frac2._t),(_b*frac2._b));
         new_f.reduse();
         return new_f;
     }
     //overload the operator - for 2 fractions. 
     Fraction Fraction::operator-(const Fraction &frac2) const{
+        long int a=_t*frac2._b-_b*frac2._t;
+        if ((a < INT_MIN) || (a > INT_MAX))
+            throw overflow_error("int out of range"); 
         Fraction new_f((_t*frac2._b-_b*frac2._t),(_b*frac2._b));
         new_f.reduse();
         return new_f;
     }
     //overload the operator * for 2 fractions. 
     Fraction Fraction::operator*(const Fraction &frac2) const{
+        long long int a = this->_t;
+        long long int b = frac2._t; //this->_b*frac2._b;
+        if ((a*b < INT_MIN) || (a*b > INT_MAX))
+            throw overflow_error("int out of range"); 
+        a=this->_b;
+        b=frac2._b;
+        if ((a*b < INT_MIN) || (a*b > INT_MAX))
+            throw overflow_error("int out of range");
         Fraction new_f(this->_t*frac2._t,this->_b*frac2._b);
         new_f.reduse();
         return new_f;
     }
     //overload the operator / for 2 fractions. 
     Fraction Fraction::operator/(const Fraction &frac2) const{
-        Fraction new_f(this->_t*frac2._b,this->_b*frac2._t);
-        new_f.reduse();
-        return new_f;
+        if(frac2._t==0)
+            throw runtime_error("can't devide by 0");
+        Fraction new_f(frac2._b,frac2._t);
+        return this->operator*(new_f);
     }
     //overload the operator == for 2 fractions. 
     bool Fraction::operator==(const Fraction &frac2) const{
         bool frac1pos = false, frac2pos = false;
-        if((this->_t>=0 && this->_b>=0)||(this->_t<=0 && this->_b<=0))
-            frac1pos=true;
-        if((frac2._t>=0 && frac2._b>=0)||(frac2._t<=0 && frac2._b<=0))
-            frac2pos=true;
-        //diff sign
-        if (frac1pos ^ frac2pos)   
+        //if top is 0
+        if((this->_t==0 && frac2._t!=0) || (this->_t!=0 && frac2._t==0))
             return false;
-        //both neg
-        else if (frac1pos==false && frac2pos==false){
-            if(((this->_t*(-1)) != frac2._t) && (this->_b*(-1)) != frac2._b)
-                return false;
+        else if(this->_t==0 && frac2._t==0)
             return true;
-        }
+        //checks for positivity
+        if((this->_t>=0))
+            frac1pos=true;
+        if((frac2._t>=0))
+            frac2pos=true;
+        //if diff sign return false
+        if ((frac1pos==false&&frac2pos==true)||(frac1pos==true&&frac2pos==false))   
+            return false;
+        //because in reduse we are simplifing the fraction to be same format of neg and pos
         else{
-            if(((this->_t) != frac2._t) && (this->_b) != frac2._b)
+            if((this->_t != frac2._t) || this->_b != frac2._b)
                 return false;
             return true;
         }
     }
     //overload the operator != for 2 fractions. 
     bool Fraction::operator!=(const Fraction &frac2) const{
-        if(this->_t!=frac2._t&&this->_b!=frac2._b)
-            return true;
-        return false;
+        return !(this->operator==(frac2));
     }
     //overload the operator > for 2 fractions. 
     bool Fraction::operator>(const Fraction &frac2) const{
-        if((this->operator-(frac2)).getNumerator()>0)
+        // because a/b > c/d == a*d > b*c
+        if ((this->_t * frac2._b) > (this->_b * frac2._t))
             return true;
         return false;
     }
     //overload the operator < for 2 fractions. 
     bool Fraction::operator<(const Fraction &frac2) const{
-        if((this->operator-(frac2)).getNumerator()<0)
+        // because a/b < c/d == a*d < b*c
+        if ((this->_t * frac2._b) < (this->_b * frac2._t))
             return true;
         return false;
     }
     //overload the operator >= for 2 fractions. 
     bool Fraction::operator>=(const Fraction &frac2) const{
-        if((this->operator-(frac2)).getNumerator()>=0)
+        if((this->operator>(frac2))||(this->operator==(frac2)))
             return true;
         return false;
     }
     //overload the operator <= for 2 fractions. 
     bool Fraction::operator<=(const Fraction &frac2) const{
-       if((this->operator-(frac2)).getNumerator()<=0)
+       if((this->operator<(frac2))||(this->operator==(frac2)))
             return true;
         return false;
     }
@@ -158,7 +173,7 @@ using namespace std;
     //overload the operator / for fraction and float. 
     Fraction Fraction::operator/(float num) const{
         if(num==0.0)
-            throw std::invalid_argument("cant devide by 0!");
+            throw runtime_error("can't devide by 0");
         Fraction frac2(num);
         return this->operator/(frac2);
     }
@@ -213,7 +228,7 @@ using namespace std;
     //overload the operator / float and fraction. 
     Fraction ariel::operator/(float num,const Fraction &frac2){
         if(frac2.getNumerator()==0)
-            throw std::invalid_argument("cant devide by 0!");
+            throw runtime_error("can't devide by 0");
         Fraction frac1(num);
         return frac1.operator/(frac2);
     }
@@ -290,6 +305,7 @@ using namespace std;
             throw runtime_error("not enogh parameters");
         fraction._t=top;
         fraction._b=bottom;
+        fraction.reduse();
         return is;
     }
 
